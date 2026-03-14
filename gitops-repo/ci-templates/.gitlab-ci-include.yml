@@ -1,0 +1,23 @@
+# GitLab CI 可复用模板 — 供各代码仓库 include 使用
+# 使用方式：在代码仓库的 .gitlab-ci.yml 中添加：
+#   include:
+#     - project: 'infra/gitops-repo'
+#       file: 'ci-templates/.gitlab-ci-include.yml'
+
+.deploy-to-dev:
+  stage: deploy
+  script:
+    - |
+      echo "==> Updating dev overlay..."
+      git clone "https://${DEPLOY_TOKEN_USER}:${DEPLOY_TOKEN}@gitlab.company.com/infra/gitops-repo.git" /tmp/gitops-repo
+      cd /tmp/gitops-repo
+      OVERLAY="services/${DOMAIN}/${SERVICE_NAME}/overlays/dev/kustomization.yaml"
+      sed -i "s/newTag: \".*\"/newTag: \"${CI_COMMIT_SHORT_SHA}\"/" "${OVERLAY}"
+      git add "${OVERLAY}"
+      git commit -m "ci: update ${SERVICE_NAME} image to ${CI_COMMIT_SHORT_SHA}"
+      for i in 1 2 3; do
+        git push origin main && break
+        git pull --rebase origin main
+      done
+  only:
+    - main

@@ -1,0 +1,72 @@
+---
+# Services ApplicationSet
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: services
+  namespace: argocd
+spec:
+  goTemplate: true
+  generators:
+    - matrix:
+        generators:
+          - git:
+              repoURL: https://gitlab.company.com/infra/gitops-repo.git
+              revision: HEAD
+              directories:
+                - path: "services/*/*/overlays/*"
+          - clusters:
+              selector:
+                matchLabels:
+                  env: "{{ index .path.segments 4 }}"
+  template:
+    metadata:
+      name: "{{ index .path.segments 2 }}-{{ index .path.segments 4 }}"
+    spec:
+      project: default
+      source:
+        repoURL: https://gitlab.company.com/infra/gitops-repo.git
+        targetRevision: HEAD
+        path: "{{ .path.path }}"
+      destination:
+        server: "{{ .server }}"
+        namespace: "{{ index .path.segments 4 }}-{{ index .path.segments 1 }}"
+      syncPolicy:
+        automated:
+          selfHeal: true
+---
+# Resources ApplicationSet
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: resources
+  namespace: argocd
+spec:
+  goTemplate: true
+  generators:
+    - matrix:
+        generators:
+          - git:
+              repoURL: https://gitlab.company.com/infra/gitops-repo.git
+              revision: HEAD
+              directories:
+                - path: "resources/*/*/*/overlays/*"
+          - clusters:
+              selector:
+                matchLabels:
+                  env: "{{ index .path.segments 5 }}"
+  template:
+    metadata:
+      name: "{{ index .path.segments 3 }}-{{ index .path.segments 5 }}"
+    spec:
+      project: default
+      source:
+        repoURL: https://gitlab.company.com/infra/gitops-repo.git
+        targetRevision: HEAD
+        path: "{{ .path.path }}"
+      destination:
+        server: "{{ .server }}"
+        namespace: "{{ index .path.segments 5 }}-{{ index .path.segments 1 }}"
+      syncPolicy:
+        automated:
+          selfHeal: true

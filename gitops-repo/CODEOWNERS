@@ -1,0 +1,16 @@
+# Platform-wide files — platform team approval required
+/platform-inventory.yaml  @platform
+/infrastructure/           @platform
+/argocd/                   @platform
+
+# Resources and services — by domain
+/resources/nrtk/           @nrtk
+/services/nrtk/            @nrtk
+/resources/ppp-rtk/        @ppp-rtk
+/services/ppp-rtk/         @ppp-rtk
+/resources/biz-app/        @biz-app
+/services/biz-app/         @biz-app
+/resources/bigdata/        @bigdata
+/services/bigdata/         @bigdata
+/resources/tools/          @tools
+/services/tools/           @tools

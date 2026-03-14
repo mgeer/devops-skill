@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": ".devops.yaml",
+  "description": "服务 DevOps 配置声明文件",
+  "type": "object",
+  "required": ["service", "gitops", "runtime"],
+  "additionalProperties": false,
+  "properties": {
+    "service": {
+      "type": "object",
+      "required": ["name", "domain", "owner"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]{1,39}$",
+          "description": "服务名，小写字母+数字+连字符，2-40字符"
+        },
+        "domain": {
+          "type": "string",
+          "description": "业务域，必须在 platform-inventory.yaml 的 domains 中存在"
+        },
+        "owner": {
+          "type": "string",
+          "minLength": 1,
+          "description": "负责人"
+        }
+      }
+    },
+    "gitops": {
+      "type": "object",
+      "required": ["repo", "path"],
+      "additionalProperties": false,
+      "properties": {
+        "repo": {
+          "type": "string",
+          "description": "gitops 配置仓库地址"
+        },
+        "path": {
+          "type": "string",
+          "description": "服务在配置仓库中的路径，格式 services/{domain}/{service}"
+        }
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "required": ["language", "port"],
+      "additionalProperties": false,
+      "properties": {
+        "language": {
+          "type": "string",
+          "enum": ["go", "java", "node", "python"],
+          "description": "编程语言"
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "服务监听端口"
+        },
+        "health_check": {
+          "type": "string",
+          "default": "/healthz",
+          "description": "健康检查路径"
+        },
+        "metrics": {
+          "type": "string",
+          "default": "/metrics",
+          "description": "Prometheus 指标路径"
+        },
+        "slow_start": {
+          "type": "boolean",
+          "default": false,
+          "description": "是否为慢启动服务，true 时生成 startupProbe"
+        },
+        "migration_path": {
+          "type": "string",
+          "description": "DB migration 文件目录路径（相对代码仓库根目录）。有值时在 deployment 中注入 Flyway init container"
+        }
+      }
+    },
+    "dependencies": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "object",
+        "required": ["name", "type", "role"],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "资源名称"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["mysql", "redis", "kafka-topic"],
+            "description": "资源类型"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["owner", "producer", "consumer"],
+            "description": "依赖角色"
+          },
+          "domain": {
+            "type": "string",
+            "description": "资源所属域（跨域引用时必填，同域时可省略）"
+          }
+        }
+      }
+    }
+  }
+}
