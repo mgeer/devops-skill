@@ -1,0 +1,13 @@
+{
+  "eval_id": 0,
+  "eval_name": "eval-init-service",
+  "variant": "without_skill",
+  "expectations": [
+    {"text": "has-managed-by-label", "passed": false, "evidence": "deployment.yaml missing managed-by: devops-skill label"},
+    {"text": "has-runAsNonRoot", "passed": false, "evidence": "deployment.yaml missing runAsNonRoot: true"},
+    {"text": "has-readOnlyRootFilesystem", "passed": false, "evidence": "deployment.yaml missing readOnlyRootFilesystem: true"},
+    {"text": "devops-has-service-name", "passed": true, "evidence": ".devops.yaml contains order-service"},
+    {"text": "devops-has-domain", "passed": true, "evidence": ".devops.yaml contains trade"},
+    {"text": "no-plaintext-secrets", "passed": true, "evidence": "No plaintext passwords found"}
+  ]
+}

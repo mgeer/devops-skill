@@ -1,0 +1,33 @@
+domains:
+  - name: trade
+    description: 交易域
+    services: []
+  - name: user
+    description: 用户域
+    services: []
+  - name: payment
+    description: 支付域
+    services: []
+
+gitops:
+  repo: git@gitlab.company.com:platform/gitops-repo.git
+
+registry: harbor.company.com
+
+middleware:
+  kafka:
+    bootstrap: kafka-cluster-kafka-bootstrap.kafka.svc:9092
+  mysql:
+    operator: mysql-operator
+  redis:
+    operator: redis-operator
+
+environments:
+  - name: dev
+    cluster: non-prod
+  - name: test
+    cluster: non-prod
+  - name: staging
+    cluster: non-prod
+  - name: prod
+    cluster: prod

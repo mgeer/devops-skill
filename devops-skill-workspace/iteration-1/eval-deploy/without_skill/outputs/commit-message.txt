@@ -1,0 +1,9 @@
+deploy(test): update order-service to v1.2.3
+
+Update order-service image tag from "latest" to "v1.2.3" in the test
+environment overlay.
+
+Service: order-service
+Domain: trade
+Environment: test
+Image: harbor.company.com/trade/order-service:v1.2.3

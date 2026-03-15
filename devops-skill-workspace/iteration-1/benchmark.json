@@ -1,0 +1,83 @@
+{
+  "skill_name": "devops",
+  "iteration": 1,
+  "configurations": [
+    {
+      "name": "with_skill",
+      "evals": [
+        {
+          "eval_name": "eval-init-service",
+          "pass_rate": 1.0,
+          "passed": 6,
+          "total": 6,
+          "duration_seconds": 64.0,
+          "total_tokens": 31326
+        },
+        {
+          "eval_name": "eval-add-dependency",
+          "pass_rate": 1.0,
+          "passed": 6,
+          "total": 6,
+          "duration_seconds": 88.4,
+          "total_tokens": 32731
+        },
+        {
+          "eval_name": "eval-deploy",
+          "pass_rate": 1.0,
+          "passed": 3,
+          "total": 3,
+          "duration_seconds": 66.6,
+          "total_tokens": 28125
+        }
+      ],
+      "aggregate": {
+        "mean_pass_rate": 1.0,
+        "mean_duration_seconds": 73.0,
+        "mean_tokens": 30727,
+        "total_passed": 15,
+        "total_assertions": 15
+      }
+    },
+    {
+      "name": "without_skill",
+      "evals": [
+        {
+          "eval_name": "eval-init-service",
+          "pass_rate": 0.5,
+          "passed": 3,
+          "total": 6,
+          "duration_seconds": 51.6,
+          "total_tokens": 13968
+        },
+        {
+          "eval_name": "eval-add-dependency",
+          "pass_rate": 0.33,
+          "passed": 2,
+          "total": 6,
+          "duration_seconds": 107.0,
+          "total_tokens": 22804
+        },
+        {
+          "eval_name": "eval-deploy",
+          "pass_rate": 0.67,
+          "passed": 2,
+          "total": 3,
+          "duration_seconds": 39.6,
+          "total_tokens": 13153
+        }
+      ],
+      "aggregate": {
+        "mean_pass_rate": 0.47,
+        "mean_duration_seconds": 66.1,
+        "mean_tokens": 16642,
+        "total_passed": 7,
+        "total_assertions": 15
+      }
+    }
+  ],
+  "delta": {
+    "pass_rate_improvement": "+53%",
+    "with_skill_pass_rate": "100%",
+    "without_skill_pass_rate": "47%"
+  }
+}

@@ -1,0 +1,57 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: trade-staging
+
+resources:
+  - ../../base
+
+patches:
+  - target:
+      kind: Deployment
+      name: order-service
+    patch: |
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: order-service
+      spec:
+        replicas: 2
+        template:
+          spec:
+            containers:
+              - name: order-service
+                resources:
+                  requests:
+                    cpu: 250m
+                    memory: 256Mi
+                  limits:
+                    cpu: 500m
+                    memory: 512Mi
+                env:
+                  - name: REDIS_HOST
+                    value: order-cache.trade-staging.svc.cluster.local
+                  - name: REDIS_PORT
+                    value: "6379"
+                  - name: REDIS_DB
+                    value: "0"
+  - target:
+      kind: Ingress
+      name: order-service
+    patch: |
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        name: order-service
+      spec:
+        rules:
+          - host: order-service.staging.example.com
+            http:
+              paths:
+                - path: /
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: order-service
+                      port:
+                        number: 80

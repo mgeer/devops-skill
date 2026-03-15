@@ -1,0 +1,1 @@
+ci: update order-service image to v1.2.3

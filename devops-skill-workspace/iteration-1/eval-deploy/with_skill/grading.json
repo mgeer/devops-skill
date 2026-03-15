@@ -1,0 +1,10 @@
+{
+  "eval_id": 2,
+  "eval_name": "eval-deploy",
+  "variant": "with_skill",
+  "expectations": [
+    {"text": "newTag-is-v123", "passed": true, "evidence": "kustomization.yaml newTag set to v1.2.3"},
+    {"text": "commit-msg-format", "passed": true, "evidence": "commit message follows ci: update order-service image to v1.2.3 format"},
+    {"text": "mr-has-scope", "passed": true, "evidence": "MR description includes initiator, intent, and impact scope"}
+  ]
+}

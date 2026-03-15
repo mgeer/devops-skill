@@ -1,0 +1,26 @@
+{
+  "skill_name": "devops",
+  "evals": [
+    {
+      "id": 0,
+      "name": "eval-init-service",
+      "prompt": "我有一个 Go 写的订单服务 order-service，属于交易域，端口 8080，健康检查路径 /healthz。需要接入 DevOps 平台，资源规格选 M。请直接生成配置，不需要通过 MCP 操作配置仓库。",
+      "expected_output": "生成符合 platform-spec.md 的 base 文件（deployment.yaml、service.yaml、ingress.yaml、kustomization.yaml）和 4 个环境的 overlay kustomization.yaml，以及 .devops.yaml",
+      "files": []
+    },
+    {
+      "id": 1,
+      "name": "eval-add-dependency",
+      "prompt": "order-service 需要加一个 Redis 做订单缓存。请基于已有的 .devops.yaml 生成 Redis 资源配置和 Deployment 的 envFrom patch。不需要通过 MCP 操作配置仓库，直接生成文件内容。",
+      "expected_output": "生成 Redis 实例的 base/instance.yaml + overlay kustomization.yaml，更新服务 overlay 添加 secretRef envFrom patch，更新 .devops.yaml 添加 redis 依赖",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "eval-deploy",
+      "prompt": "把 order-service 部署到 test 环境，镜像 tag 是 v1.2.3。请生成需要修改的配置文件内容和 MR 描述。不需要通过 MCP 操作配置仓库。",
+      "expected_output": "修改 overlays/test/kustomization.yaml 的 newTag 为 v1.2.3，生成 MR 描述包含发起人、意图、影响范围",
+      "files": []
+    }
+  ]
+}

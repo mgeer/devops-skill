@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: order-cache-config
+  labels:
+    app: order-cache
+    domain: trade
+    component: redis
+data:
+  redis.conf: |
+    # Redis configuration for order-cache
+    bind 0.0.0.0
+    port 6379
+    protected-mode no
+
+    # Persistence (AOF)
+    appendonly yes
+    appendfsync everysec
+
+    # Memory management
+    maxmemory 200mb
+    maxmemory-policy allkeys-lru
+
+    # Logging
+    loglevel notice
+
+    # TCP keepalive
+    tcp-keepalive 300
+
+    # Timeout for idle connections (0 = no timeout)
+    timeout 0

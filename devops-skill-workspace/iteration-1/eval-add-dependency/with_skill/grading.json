@@ -1,0 +1,13 @@
+{
+  "eval_id": 1,
+  "eval_name": "eval-add-dependency",
+  "variant": "with_skill",
+  "expectations": [
+    {"text": "redis-instance-name", "passed": true, "evidence": "instance.yaml uses order-service-cache naming"},
+    {"text": "redis-has-managed-by", "passed": true, "evidence": "instance.yaml contains managed-by: devops-skill"},
+    {"text": "redis-has-owner", "passed": true, "evidence": "instance.yaml contains owner: order-service"},
+    {"text": "has-secretRef", "passed": true, "evidence": "overlay contains order-service-cache-secret reference"},
+    {"text": "devops-has-redis-dep", "passed": true, "evidence": ".devops.yaml contains redis dependency"},
+    {"text": "devops-redis-role-owner", "passed": true, "evidence": ".devops.yaml redis dependency has owner role"}
+  ]
+}

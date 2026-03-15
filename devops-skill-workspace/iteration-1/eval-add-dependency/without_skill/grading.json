@@ -1,0 +1,13 @@
+{
+  "eval_id": 1,
+  "eval_name": "eval-add-dependency",
+  "variant": "without_skill",
+  "expectations": [
+    {"text": "redis-instance-name", "passed": false, "evidence": "No instance.yaml found; without-skill used raw Redis Deployment instead of Operator CRD"},
+    {"text": "redis-has-managed-by", "passed": false, "evidence": "No instance.yaml with managed-by label"},
+    {"text": "redis-has-owner", "passed": false, "evidence": "No instance.yaml with owner label"},
+    {"text": "has-secretRef", "passed": false, "evidence": "No order-service-cache-secret reference; used hardcoded env vars instead"},
+    {"text": "devops-has-redis-dep", "passed": true, "evidence": ".devops.yaml contains redis dependency"},
+    {"text": "devops-redis-role-owner", "passed": true, "evidence": ".devops.yaml has owner role"}
+  ]
+}

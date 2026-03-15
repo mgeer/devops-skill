@@ -1,0 +1,6 @@
+{
+  "eval_id": 0,
+  "eval_name": "eval-init-service",
+  "prompt": "我有一个 Go 写的订单服务 order-service，属于交易域，端口 8080，健康检查路径 /healthz。需要接入 DevOps 平台，资源规格选 M。请直接生成配置，不需要通过 MCP 操作配置仓库。",
+  "assertions": []
+}

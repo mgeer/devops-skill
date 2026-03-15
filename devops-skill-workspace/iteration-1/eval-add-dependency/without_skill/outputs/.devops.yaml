@@ -1,0 +1,16 @@
+service:
+  name: order-service
+  domain: trade
+  owner: zhangsan
+gitops:
+  repo: git@gitlab.company.com:platform/gitops-repo.git
+  path: services/trade/order-service
+runtime:
+  language: go
+  port: 8080
+  health_check: /healthz
+dependencies:
+  - name: order-cache
+    type: redis
+    domain: trade
+    path: resources/trade/redis/order-cache

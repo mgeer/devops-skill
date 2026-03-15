@@ -1,0 +1,16 @@
+apiVersion: devops/v1
+kind: ServiceConfig
+metadata:
+  name: order-service
+  domain: trade
+spec:
+  language: go
+  port: 8080
+  healthCheck:
+    path: /healthz
+  resourceSize: M
+  environments:
+    - dev
+    - test
+    - staging
+    - prod

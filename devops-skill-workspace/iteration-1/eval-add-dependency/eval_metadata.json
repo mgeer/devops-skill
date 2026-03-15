@@ -1,0 +1,6 @@
+{
+  "eval_id": 1,
+  "eval_name": "eval-add-dependency",
+  "prompt": "order-service 需要加一个 Redis 做订单缓存。请基于已有的 .devops.yaml 生成 Redis 资源配置和 Deployment 的 envFrom patch。不需要通过 MCP 操作配置仓库，直接生成文件内容。",
+  "assertions": []
+}

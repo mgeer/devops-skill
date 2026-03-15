@@ -1,0 +1,6 @@
+{
+  "eval_id": 2,
+  "eval_name": "eval-deploy",
+  "prompt": "把 order-service 部署到 test 环境，镜像 tag 是 v1.2.3。请生成需要修改的配置文件内容和 MR 描述。不需要通过 MCP 操作配置仓库。",
+  "assertions": []
+}

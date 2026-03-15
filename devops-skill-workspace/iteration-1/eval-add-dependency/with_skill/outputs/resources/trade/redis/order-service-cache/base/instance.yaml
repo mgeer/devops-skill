@@ -1,0 +1,18 @@
+apiVersion: redis.redis.opstreelabs.in/v1beta2
+kind: Redis
+metadata:
+  name: order-service-cache
+  labels:
+    app: order-service-cache
+    domain: trade
+    owner: order-service
+    managed-by: devops-skill
+spec:
+  kubernetesConfig:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 256Mi

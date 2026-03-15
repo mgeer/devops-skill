@@ -1,0 +1,17 @@
+service:
+  name: order-service
+  domain: trade
+  owner: ""
+
+gitops:
+  repo: git@gitlab.company.com:platform/gitops-repo.git
+  path: services/trade/order-service
+
+runtime:
+  language: go
+  port: 8080
+  health_check: /healthz
+  metrics: /metrics
+  slow_start: false
+
+dependencies: []

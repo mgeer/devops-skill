@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>DevOps Skill Eval - Iteration 1</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #333; padding: 24px; }
+  h1 { font-size: 24px; margin-bottom: 8px; }
+  .subtitle { color: #666; margin-bottom: 24px; }
+  .tabs { display: flex; gap: 4px; margin-bottom: 20px; }
+  .tab { padding: 10px 20px; background: #e0e0e0; border: none; border-radius: 8px 8px 0 0; cursor: pointer; font-size: 14px; }
+  .tab.active { background: #fff; font-weight: 600; }
+  .panel { display: none; background: #fff; border-radius: 0 8px 8px 8px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .panel.active { display: block; }
+
+  /* Benchmark tab */
+  .summary-cards { display: flex; gap: 16px; margin-bottom: 24px; }
+  .card { flex: 1; padding: 20px; border-radius: 8px; text-align: center; }
+  .card.green { background: #e8f5e9; border: 1px solid #a5d6a7; }
+  .card.red { background: #ffebee; border: 1px solid #ef9a9a; }
+  .card .big { font-size: 36px; font-weight: 700; }
+  .card .label { font-size: 13px; color: #666; margin-top: 4px; }
+
+  table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+  th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #eee; }
+  th { background: #f9f9f9; font-weight: 600; font-size: 13px; color: #555; }
+  .pass { color: #2e7d32; font-weight: 600; }
+  .fail { color: #c62828; font-weight: 600; }
+
+  /* Outputs tab */
+  .eval-nav { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .eval-btn { padding: 8px 16px; border: 1px solid #ddd; border-radius: 6px; background: #fff; cursor: pointer; font-size: 13px; }
+  .eval-btn.active { background: #1976d2; color: #fff; border-color: #1976d2; }
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .compare-col { border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; }
+  .compare-col h3 { font-size: 14px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+  .compare-col.with h3 { color: #2e7d32; }
+  .compare-col.without h3 { color: #c62828; }
+  .file-block { margin-bottom: 16px; }
+  .file-name { font-size: 12px; color: #666; font-family: monospace; margin-bottom: 4px; }
+  .file-content { background: #f8f8f8; padding: 12px; border-radius: 4px; font-family: monospace; font-size: 12px; white-space: pre-wrap; max-height: 400px; overflow-y: auto; border: 1px solid #e8e8e8; }
+  .grade-section { margin-top: 12px; padding: 12px; background: #fafafa; border-radius: 6px; }
+  .grade-item { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 13px; }
+  .grade-icon { width: 18px; text-align: center; }
+  .feedback-box { width: 100%; margin-top: 16px; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; min-height: 60px; resize: vertical; }
+
+  .analysis { background: #fff3e0; padding: 16px; border-radius: 8px; margin-top: 16px; border: 1px solid #ffe0b2; }
+  .analysis h3 { font-size: 14px; margin-bottom: 8px; }
+  .analysis li { margin: 4px 0; font-size: 13px; }
+
+  #submit-btn { margin-top: 20px; padding: 12px 24px; background: #1976d2; color: #fff; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; }
+  #submit-btn:hover { background: #1565c0; }
+</style>
+</head>
+<body>
+
+<h1>DevOps Skill Evaluation</h1>
+<p class="subtitle">Iteration 1 &mdash; with_skill vs without_skill (baseline)</p>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('benchmark')">Benchmark</button>
+  <button class="tab" onclick="switchTab('outputs')">Outputs</button>
+</div>
+
+<div id="benchmark" class="panel active">
+  <div class="summary-cards">
+    <div class="card green">
+      <div class="big">100%</div>
+      <div class="label">With Skill Pass Rate</div>
+      <div style="font-size:13px; margin-top:4px;">15/15 assertions</div>
+    </div>
+    <div class="card red">
+      <div class="big">47%</div>
+      <div class="label">Without Skill Pass Rate</div>
+      <div style="font-size:13px; margin-top:4px;">7/15 assertions</div>
+    </div>
+    <div class="card green">
+      <div class="big">+53%</div>
+      <div class="label">Improvement</div>
+    </div>
+  </div>
+
+  <h3 style="margin-bottom:12px;">Per-Eval Breakdown</h3>
+  <table>
+    <tr>
+      <th>Eval</th>
+      <th>With Skill</th>
+      <th>Without Skill</th>
+      <th>With Tokens</th>
+      <th>Without Tokens</th>
+      <th>With Time</th>
+      <th>Without Time</th>
+    </tr>
+    <tr>
+      <td>init-service</td>
+      <td class="pass">6/6 (100%)</td>
+      <td class="fail">3/6 (50%)</td>
+      <td>31,326</td>
+      <td>13,968</td>
+      <td>64.0s</td>
+      <td>51.6s</td>
+    </tr>
+    <tr>
+      <td>add-dependency</td>
+      <td class="pass">6/6 (100%)</td>
+      <td class="fail">2/6 (33%)</td>
+      <td>32,731</td>
+      <td>22,804</td>
+      <td>88.4s</td>
+      <td>107.0s</td>
+    </tr>
+    <tr>
+      <td>deploy</td>
+      <td class="pass">3/3 (100%)</td>
+      <td class="fail">2/3 (67%)</td>
+      <td>28,125</td>
+      <td>13,153</td>
+      <td>66.6s</td>
+      <td>39.6s</td>
+    </tr>
+  </table>
+
+  <h3 style="margin-bottom:12px;">Assertion Detail</h3>
+  <table>
+    <tr><th>Eval</th><th>Assertion</th><th>With Skill</th><th>Without Skill</th></tr>
+    <tr><td rowspan="6">init-service</td><td>has-managed-by-label</td><td class="pass">PASS</td><td class="fail">FAIL</td></tr>
+    <tr><td>has-runAsNonRoot</td><td class="pass">PASS</td><td class="fail">FAIL</td></tr>
+    <tr><td>has-readOnlyRootFilesystem</td><td class="pass">PASS</td><td class="fail">FAIL</td></tr>
+    <tr><td>devops-has-service-name</td><td class="pass">PASS</td><td class="pass">PASS</td></tr>
+    <tr><td>devops-has-domain</td><td class="pass">PASS</td><td class="pass">PASS</td></tr>
+    <tr><td>no-plaintext-secrets</td><td class="pass">PASS</td><td class="pass">PASS</td></tr>
+    <tr><td rowspan="6">add-dependency</td><td>redis-instance-name (order-service-cache)</td><td class="pass">PASS</td><td class="fail">FAIL</td></tr>
+    <tr><td>redis-has-managed-by</td><td class="pass">PASS</td><td class="fail">FAIL</td></tr>
+    <tr><td>redis-has-owner</td><td class="pass">PASS</td><td class="fail">FAIL</td></tr>
+    <tr><td>has-secretRef (order-service-cache-secret)</td><td class="pass">PASS</td><td class="fail">FAIL</td></tr>
+    <tr><td>devops-has-redis-dep</td><td class="pass">PASS</td><td class="pass">PASS</td></tr>
+    <tr><td>devops-redis-role-owner</td><td class="pass">PASS</td><td class="pass">PASS</td></tr>
+    <tr><td rowspan="3">deploy</td><td>newTag-is-v123</td><td class="pass">PASS</td><td class="pass">PASS</td></tr>
+    <tr><td>commit-msg-format (ci: update ...)</td><td class="pass">PASS</td><td class="fail">FAIL</td></tr>
+    <tr><td>mr-has-scope</td><td class="pass">PASS</td><td class="pass">PASS</td></tr>
+  </table>
+
+  <div class="analysis">
+    <h3>Analysis</h3>
+    <ul>
+      <li><strong>Skill 核心价值：平台规范一致性。</strong> Without-skill 在通用 K8s 知识上表现不错（能生成 Deployment/Service），但完全不了解平台特有的命名规范（{service}-cache）、标签要求（managed-by: devops-skill）、安全要求（securityContext）和 Operator CRD 格式。</li>
+      <li><strong>add-dependency 差距最大（33% vs 100%）。</strong> Without-skill 使用了原生 Redis Deployment 而非 Redis Operator CRD，且用硬编码环境变量而非 Operator Secret 引用——这在真实环境中会导致连接失败。</li>
+      <li><strong>deploy 差距最小（67% vs 100%）。</strong> 部署场景相对简单，without-skill 只是 commit message 格式不符合规范。</li>
+      <li><strong>Token 开销：</strong> with-skill 平均多用 ~85% token（30.7k vs 16.6k），因为需要读取 skill 和 platform-spec 文件。但质量提升显著（+53% pass rate），代价合理。</li>
+      <li><strong>非区分性断言：</strong> devops-has-service-name、devops-has-domain、no-plaintext-secrets 两组都通过，属于"easy wins"——未来可替换为更有区分度的断言。</li>
+    </ul>
+  </div>
+</div>
+
+<div id="outputs" class="panel">
+  <p style="margin-bottom:12px;">选择测试用例查看输出对比：</p>
+  <div class="eval-nav">
+    <button class="eval-btn active" onclick="switchEval(0)">init-service</button>
+    <button class="eval-btn" onclick="switchEval(1)">add-dependency</button>
+    <button class="eval-btn" onclick="switchEval(2)">deploy</button>
+  </div>
+
+  <div id="eval-detail">
+    <p id="eval-prompt" style="background:#f0f4ff; padding:12px; border-radius:6px; margin-bottom:16px; font-size:13px;"></p>
+    <div class="compare">
+      <div class="compare-col with">
+        <h3>With Skill</h3>
+        <div id="with-grades"></div>
+        <div id="with-files"></div>
+      </div>
+      <div class="compare-col without">
+        <h3>Without Skill (Baseline)</h3>
+        <div id="without-grades"></div>
+        <div id="without-files"></div>
+      </div>
+    </div>
+    <textarea class="feedback-box" id="feedback" placeholder="Leave feedback for this test case..."></textarea>
+  </div>
+
+  <button id="submit-btn" onclick="submitFeedback()">Submit All Reviews</button>
+</div>
+
+<script>
+const evals = [
+  {
+    name: "eval-init-service",
+    prompt: "我有一个 Go 写的订单服务 order-service，属于交易域，端口 8080，健康检查路径 /healthz。需要接入 DevOps 平台，资源规格选 M。",
+    with_grades: [
+      {text:"has-managed-by-label", passed:true},
+      {text:"has-runAsNonRoot", passed:true},
+      {text:"has-readOnlyRootFilesystem", passed:true},
+      {text:"devops-has-service-name", passed:true},
+      {text:"devops-has-domain", passed:true},
+      {text:"no-plaintext-secrets", passed:true}
+    ],
+    without_grades: [
+      {text:"has-managed-by-label", passed:false},
+      {text:"has-runAsNonRoot", passed:false},
+      {text:"has-readOnlyRootFilesystem", passed:false},
+      {text:"devops-has-service-name", passed:true},
+      {text:"devops-has-domain", passed:true},
+      {text:"no-plaintext-secrets", passed:true}
+    ],
+    with_summary: "生成了 .devops.yaml + 4 base 文件 + 4 overlay。严格遵循 platform-spec.md：\n- deployment 包含完整 securityContext\n- 所有资源有 managed-by: devops-skill 标签\n- 镜像: harbor.company.com/trade/order-service\n- overlay 用 JSON patch 设置 replicas/resources\n- prod 上调至 L 级资源，3 副本",
+    without_summary: "生成了 .devops.yaml + 4 base 文件 + 4 overlay。表现：\n- 缺少 managed-by: devops-skill 标签\n- 缺少 securityContext（runAsNonRoot/readOnlyRootFilesystem）\n- 资源直接写在 base deployment 中而非 overlay patch\n- 使用了 commonLabels 方式而非模板中的标签结构"
+  },
+  {
+    name: "eval-add-dependency",
+    prompt: "order-service 需要加一个 Redis 做订单缓存。请基于已有的 .devops.yaml 生成 Redis 资源配置和 Deployment 的 envFrom patch。",
+    with_grades: [
+      {text:"redis-instance-name (order-service-cache)", passed:true},
+      {text:"redis-has-managed-by", passed:true},
+      {text:"redis-has-owner", passed:true},
+      {text:"has-secretRef (order-service-cache-secret)", passed:true},
+      {text:"devops-has-redis-dep", passed:true},
+      {text:"devops-redis-role-owner", passed:true}
+    ],
+    without_grades: [
+      {text:"redis-instance-name (order-service-cache)", passed:false},
+      {text:"redis-has-managed-by", passed:false},
+      {text:"redis-has-owner", passed:false},
+      {text:"has-secretRef (order-service-cache-secret)", passed:false},
+      {text:"devops-has-redis-dep", passed:true},
+      {text:"devops-redis-role-owner", passed:true}
+    ],
+    with_summary: "使用 Redis Operator CRD (redis.redis.opstreelabs.in/v1beta2)\n- 实例命名: order-service-cache\n- Secret 引用: order-service-cache-secret (Operator 自动创建)\n- envFrom secretRef patch 遵循 platform-spec.md §7.5\n- 完整标签: app/domain/owner/managed-by",
+    without_summary: "使用原生 Redis Deployment + ConfigMap 方式\n- 实例命名: order-cache（不符合 {service}-cache 规范）\n- 无 Operator CRD，手动管理 Redis 实例\n- 环境变量硬编码连接信息而非 Secret 引用\n- 缺少 managed-by/owner 标签"
+  },
+  {
+    name: "eval-deploy",
+    prompt: "把 order-service 部署到 test 环境，镜像 tag 是 v1.2.3。请生成需要修改的配置文件内容和 MR 描述。",
+    with_grades: [
+      {text:"newTag-is-v123", passed:true},
+      {text:"commit-msg-format (ci: update ...)", passed:true},
+      {text:"mr-has-scope", passed:true}
+    ],
+    without_grades: [
+      {text:"newTag-is-v123", passed:true},
+      {text:"commit-msg-format (ci: update ...)", passed:false},
+      {text:"mr-has-scope", passed:true}
+    ],
+    with_summary: "- kustomization.yaml newTag: v1.2.3\n- commit: ci: update order-service image to v1.2.3\n- MR 包含发起人(zhangsan)、意图、影响范围\n- 注明 test 环境审批要求和 ArgoCD 同步策略",
+    without_summary: "- kustomization.yaml newTag: v1.2.3\n- commit: deploy(test): update order-service image（格式不符合规范）\n- MR 包含变更信息但格式不同"
+  }
+];
+
+let feedbacks = [{},{},{}];
+let currentEval = 0;
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(tab).classList.add('active');
+  event.target.classList.add('active');
+}
+
+function renderGrades(grades) {
+  return '<div class="grade-section">' + grades.map(g =>
+    `<div class="grade-item"><span class="grade-icon">${g.passed ? '✅' : '❌'}</span><span>${g.text}</span></div>`
+  ).join('') + '</div>';
+}
+
+function switchEval(idx) {
+  feedbacks[currentEval] = {text: document.getElementById('feedback').value};
+  currentEval = idx;
+  const e = evals[idx];
+  document.querySelectorAll('.eval-btn').forEach((b,i) => b.classList.toggle('active', i===idx));
+  document.getElementById('eval-prompt').textContent = '📋 ' + e.prompt;
+  document.getElementById('with-grades').innerHTML = renderGrades(e.with_grades);
+  document.getElementById('without-grades').innerHTML = renderGrades(e.without_grades);
+  document.getElementById('with-files').innerHTML = `<div class="file-block"><div class="file-content">${e.with_summary}</div></div>`;
+  document.getElementById('without-files').innerHTML = `<div class="file-block"><div class="file-content">${e.without_summary}</div></div>`;
+  document.getElementById('feedback').value = feedbacks[idx]?.text || '';
+}
+
+function submitFeedback() {
+  feedbacks[currentEval] = {text: document.getElementById('feedback').value};
+  const result = {
+    reviews: evals.map((e, i) => ({
+      run_id: e.name + '-with_skill',
+      feedback: feedbacks[i]?.text || '',
+      timestamp: new Date().toISOString()
+    })),
+    status: 'complete'
+  };
+  const blob = new Blob([JSON.stringify(result, null, 2)], {type: 'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'feedback.json';
+  a.click();
+  alert('Feedback saved! Copy feedback.json to the workspace directory.');
+}
+
+// Init
+switchEval(0);
+</script>
+</body>
+</html>

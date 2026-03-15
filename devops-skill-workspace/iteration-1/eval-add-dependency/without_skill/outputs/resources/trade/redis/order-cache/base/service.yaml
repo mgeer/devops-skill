@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-cache
+  labels:
+    app: order-cache
+    domain: trade
+    component: redis
+spec:
+  type: ClusterIP
+  selector:
+    app: order-cache
+  ports:
+    - port: 6379
+      targetPort: 6379
+      protocol: TCP
+      name: redis
