@@ -53,13 +53,13 @@ else
 
   # 检查 deployment 中的端口和健康检查路径
   if [ -f "${SERVICE_BASE}/deployment.yaml" ]; then
-    DEPLOY_PORT=$(grep 'containerPort:' "${SERVICE_BASE}/deployment.yaml" | head -1 | awk '{print $2}')
+    DEPLOY_PORT=$(grep 'containerPort:' "${SERVICE_BASE}/deployment.yaml" | head -1 | awk -F'containerPort:' '{print $2}' | awk '{print $1}')
     if [ "${DEPLOY_PORT}" != "${PORT}" ]; then
       echo "DRIFT: 端口不一致 — .devops.yaml: ${PORT}, deployment: ${DEPLOY_PORT}"
       DRIFTS=$((DRIFTS + 1))
     fi
 
-    DEPLOY_HEALTH=$(grep -A1 'livenessProbe:' "${SERVICE_BASE}/deployment.yaml" | grep 'path:' | head -1 | awk '{print $2}')
+    DEPLOY_HEALTH=$(grep -A3 'livenessProbe:' "${SERVICE_BASE}/deployment.yaml" | grep 'path:' | head -1 | awk '{print $2}' || true)
     if [ -n "${DEPLOY_HEALTH}" ] && [ "${DEPLOY_HEALTH}" != "${HEALTH_CHECK}" ]; then
       echo "DRIFT: 健康检查路径不一致 — .devops.yaml: ${HEALTH_CHECK}, deployment: ${DEPLOY_HEALTH}"
       DRIFTS=$((DRIFTS + 1))

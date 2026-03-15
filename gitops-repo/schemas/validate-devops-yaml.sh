@@ -33,8 +33,8 @@ fi
 #           kafka-topic+producer, kafka-topic+consumer
 # 不合法：mysql+producer, redis+producer, kafka-topic+owner
 while IFS= read -r line; do
-  TYPE=$(echo "${line}" | grep -oP 'type:\s*\K\S+' || true)
-  ROLE=$(echo "${line}" | grep -oP 'role:\s*\K\S+' || true)
+  TYPE=$(echo "${line}" | awk -F'type:' '{print $2}' | awk '{print $1}')
+  ROLE=$(echo "${line}" | awk -F'role:' '{print $2}' | awk '{print $1}')
 
   if [ "${TYPE}" = "mysql" ] && [ "${ROLE}" = "producer" ]; then
     echo "ERROR: invalid combination type=mysql role=producer (use 'owner' for MySQL)"

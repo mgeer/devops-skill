@@ -1,0 +1,85 @@
+clusters:
+  - name: non-prod
+    api_server: https://k8s-nonprod.company.com
+    environments: [dev, test, staging]
+  - name: prod
+    api_server: https://k8s-prod.company.com
+    environments: [prod]
+
+environments:
+  dev:     { cluster: non-prod, auto_deploy: true,  approval: none }
+  test:    { cluster: non-prod, auto_deploy: false, approval: reviewer }
+  staging: { cluster: non-prod, auto_deploy: false, approval: tech-lead }
+  prod:    { cluster: prod,     auto_deploy: false, approval: tech-lead+sre }
+
+domains:
+  - name: nrtk
+    namespaces:
+      dev: dev-nrtk
+      test: test-nrtk
+      staging: staging-nrtk
+      prod: prod-nrtk
+  - name: ppp-rtk
+    namespaces:
+      dev: dev-ppp-rtk
+      test: test-ppp-rtk
+      staging: staging-ppp-rtk
+      prod: prod-ppp-rtk
+  - name: biz-app
+    namespaces:
+      dev: dev-biz-app
+      test: test-biz-app
+      staging: staging-biz-app
+      prod: prod-biz-app
+  - name: bigdata
+    namespaces:
+      dev: dev-bigdata
+      test: test-bigdata
+      staging: staging-bigdata
+      prod: prod-bigdata
+  - name: tools
+    namespaces:
+      dev: dev-tools
+      test: test-tools
+      staging: staging-tools
+      prod: prod-tools
+
+naming:
+  service: "{name}"
+  namespace: "{env}-{domain}"
+  mysql_instance: "{service}-db"
+  redis_instance: "{service}-cache"
+  kafka_topic: "{domain}.{service}.{event}"
+  docker_image: "{registry}/{domain}/{service}:{git-sha-short}"
+  label_app: "{service}"
+  label_domain: "{domain}"
+
+middleware:
+  kafka:
+    available: true
+    operator: strimzi
+    version: "0.38"
+    cluster_name: kafka-cluster
+    bootstrap: kafka-cluster-kafka-bootstrap.kafka.svc:9092
+  mysql:
+    available: true
+    operator: oracle-mysql-operator
+    version: "8.0"
+  redis:
+    available: true
+    operator: redis-operator
+    version: "7.0"
+
+observability:
+  metrics: { available: true, stack: prometheus }
+  logging: { available: true, stack: loki }
+  tracing: { available: true, stack: tempo }
+  grafana: { url: "https://grafana.company.com" }
+
+registry:
+  url: harbor.company.com
+  project: "{domain}"
+
+gitlab:
+  url: https://gitlab.company.com
+  gitops_repo: infra/gitops-repo

@@ -1,0 +1,10 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/paymentdb
+    username: root
+    password: ${DB_PASSWORD}
+  application:
+    name: payment-service
