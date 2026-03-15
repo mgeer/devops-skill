@@ -1,0 +1,82 @@
+[
+  {
+    "query": "我们组刚写完一个 Go 的 payment-gateway 服务，代码在 gitlab 上了，现在想接入公司的 DevOps 平台，帮我生成 K8s 部署配置和 .devops.yaml",
+    "should_trigger": true
+  },
+  {
+    "query": "order-service 要加个 MySQL 数据库存订单数据，帮我在 gitops 仓库里加上 MySQL Operator 的配置，然后把 secret 引用加到 deployment 里",
+    "should_trigger": true
+  },
+  {
+    "query": "我要把 user-service 从 test 推到 staging 环境，镜像 tag 是 abc123f，帮我改 overlay 然后创建 MR",
+    "should_trigger": true
+  },
+  {
+    "query": "线上 notification-service 出问题了需要回滚到上个版本，帮我把 prod overlay 的 newTag 改回去",
+    "should_trigger": true
+  },
+  {
+    "query": "帮我看看 trade-service 现在各个环境部署的是什么版本，检查一下配置仓库里有没有漂移",
+    "should_trigger": true
+  },
+  {
+    "query": "inventory-service 要下线了，帮我清理掉 gitops 仓库里它的 base 和 overlay 配置，生成一个删除的 MR",
+    "should_trigger": true
+  },
+  {
+    "query": "prod 环境 order-service 副本数从 3 个调到 5 个，资源也从 M 调到 L，帮我改 kustomization overlay",
+    "should_trigger": true
+  },
+  {
+    "query": "刚上了 Kafka，order-service 需要发 order.created 事件，帮我在配置仓库加 KafkaTopic CRD 和 KAFKA_BOOTSTRAP 环境变量",
+    "should_trigger": true
+  },
+  {
+    "query": "我们的 search-service 不再需要 Redis 了，帮我把 redis 依赖从 .devops.yaml 和配置仓库里移除掉",
+    "should_trigger": true
+  },
+  {
+    "query": "ArgoCD 显示 staging 环境的 order-service 同步失败了，帮我检查一下 overlay 配置是不是有问题",
+    "should_trigger": true
+  },
+  {
+    "query": "帮我写一个 Python 脚本解析 nginx access log，统计每个接口的 QPS 和 P99 延迟，输出到 CSV",
+    "should_trigger": false
+  },
+  {
+    "query": "我想给 order-service 加一个 Prometheus 告警规则，当 error rate 超过 5% 就发 PagerDuty 通知",
+    "should_trigger": false
+  },
+  {
+    "query": "帮我在 Kubernetes 集群里用 kubectl 手动创建一个 namespace dev-trade，然后 apply 一下 deployment",
+    "should_trigger": false
+  },
+  {
+    "query": "我们要搭一个 Grafana dashboard 监控 order-service 的 HTTP 请求量、错误率和响应时间，数据源是 Prometheus",
+    "should_trigger": false
+  },
+  {
+    "query": "帮我写一个 Dockerfile，把我的 Go 服务编译成多阶段构建的镜像，要用 distroless 作为基础镜像",
+    "should_trigger": false
+  },
+  {
+    "query": "帮我配置 GitLab CI pipeline，要包含 lint、test、build docker image、push to harbor 这几个 stage",
+    "should_trigger": false
+  },
+  {
+    "query": "order-service 的数据库表需要加一个 status 字段，帮我写个 Flyway migration SQL 文件",
+    "should_trigger": false
+  },
+  {
+    "query": "我想给集群加一个 NetworkPolicy，限制只有 trade namespace 的 pod 能访问 payment namespace 的服务",
+    "should_trigger": false
+  },
+  {
+    "query": "帮我看看 Terraform 怎么在 AWS 上创建一个 EKS 集群，要带 managed node group 和 VPC",
+    "should_trigger": false
+  },
+  {
+    "query": "帮我用 Helm 部署一个 Redis Sentinel 集群到 Kubernetes，3 个 sentinel 节点 + 3 个 data 节点",
+    "should_trigger": false
+  }
+]
