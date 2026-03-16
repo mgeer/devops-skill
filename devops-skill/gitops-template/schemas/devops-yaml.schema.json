@@ -73,9 +73,9 @@
           "default": false,
           "description": "是否为慢启动服务，true 时生成 startupProbe"
         },
-        "migration_path": {
+        "migration_command": {
           "type": "string",
-          "description": "DB migration 文件目录路径（相对代码仓库根目录）。有值时在 deployment 中注入 Flyway init container"
+          "description": "DB migration 命令（如 alembic upgrade head）。有值时在 deployment 中注入 init container，使用应用自身镜像执行"
         }
       }
     },

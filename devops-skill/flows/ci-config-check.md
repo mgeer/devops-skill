@@ -17,7 +17,7 @@ Skill 不主动生成 CI 配置。只在 init-service 最后一步检查合理�
 ```
 检查: CI 配置中是否包含更新配置仓库镜像 tag 的步骤
 关键字匹配: gitops-repo、newTag、deploy、DEPLOY_TOKEN
-不存在 → "CI 配置中未检测到部署步骤。push 代码后不会自动触发 dev 部署。是否需要帮你添加？"
+不存在 → "CI 配置中未检测到部署步骤。push 代码后不会自动触发 int 部署。是否需要帮你添加？"
 ```
 
 ### 3. 镜像 tag 格式
@@ -33,6 +33,13 @@ Skill 不主动生成 CI 配置。只在 init-service 最后一步检查合理�
 期望: harbor.company.com/{domain}/{service}
 不匹配 → "镜像推送地址应为 harbor.company.com/{domain}/{service}，当前配置可能不正确。"
 ```
+
+### 5. Migration 一致性（仅当 dependencies 含 mysql role=owner 时检查）
+
+| 检查项 | 条件 | 级别 | 提示 |
+|--------|------|------|------|
+| migration 未配置 | 有 MySQL owner 但 `.devops.yaml` 无 `runtime.migration_command` | WARN | "有 MySQL owner 依赖但未配置 migration，部署时不会自动初始化数据库 schema。建议配置 `runtime.migration_command`。" |
+| Dockerfile 缺失 migration 工具 | 有 `migration_command` 但 Dockerfile 中未安装对应工具（如 Python 项目无 `alembic`） | WARN | "migration_command 配置了 `{command}` 但 Dockerfile 中未发现对应工具安装步骤，initContainer 可能执行失败。" |
 
 ---
 
@@ -75,13 +82,13 @@ build:
   only:
     - main
 
-deploy-dev:
+deploy-int:
   stage: deploy
   image: alpine/git:latest
   script:
     - git clone "https://${DEPLOY_TOKEN_USER}:${DEPLOY_TOKEN}@gitlab.company.com/infra/gitops-repo.git" /tmp/gitops-repo
     - cd /tmp/gitops-repo
-    - "sed -i 's/newTag: \".*\"/newTag: \"'${CI_COMMIT_SHORT_SHA}'\"/' services/{domain}/{service}/overlays/dev/kustomization.yaml"
+    - "sed -i 's/newTag: \".*\"/newTag: \"'${CI_COMMIT_SHORT_SHA}'\"/' services/{domain}/{service}/overlays/int/kustomization.yaml"
     - git add .
     - git commit -m "ci: update {service} image to ${CI_COMMIT_SHORT_SHA}"
     - |

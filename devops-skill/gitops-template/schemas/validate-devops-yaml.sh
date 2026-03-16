@@ -48,11 +48,11 @@ while IFS= read -r line; do
   fi
 done < <(grep -A2 '^\s*- name:' "${DEVOPS_YAML}" | paste - - - || true)
 
-# 检查 3: migration_path 有值时，dependencies 中需有 mysql role=owner
-MIGRATION_PATH=$(grep 'migration_path:' "${DEVOPS_YAML}" | head -1 | awk '{print $2}' || true)
-if [ -n "${MIGRATION_PATH}" ]; then
+# 检查 3: migration_command 有值时，dependencies 中需有 mysql role=owner
+MIGRATION_CMD=$(grep 'migration_command:' "${DEVOPS_YAML}" | head -1 | sed 's/.*migration_command:\s*//' || true)
+if [ -n "${MIGRATION_CMD}" ]; then
   if ! grep -A2 'type: mysql' "${DEVOPS_YAML}" | grep -q 'role: owner'; then
-    echo "WARNING: migration_path is set but no MySQL owner dependency found. Flyway init container requires MySQL connection info."
+    echo "WARNING: migration_command is set but no MySQL owner dependency found. Init container requires MySQL connection info."
     # 警告不阻塞，仅提示
   fi
 fi

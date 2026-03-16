@@ -42,7 +42,9 @@ gitops-repo/
 │           ├── base/
 │           │   ├── deployment.yaml
 │           │   ├── service.yaml
-│           │   ├── ingress.yaml
+│           │   ├── ingress.yaml              # Nginx，或：
+│           │   │   (ingressroute.yaml         # Traefik IngressRoute
+│           │   │    middleware.yaml)           # Traefik Middleware（有路径前缀时）
 │           │   └── kustomization.yaml
 │           └── overlays/{env}/
 │               └── kustomization.yaml
@@ -54,7 +56,7 @@ gitops-repo/
 **关键规则：**
 - AI **永远不操作** `infrastructure/` 和 `argocd/` 目录
 - AI 操作范围仅限 `services/` 和 `resources/`
-- 每个 overlay 环境（dev/test/staging/prod）独立一个 `kustomization.yaml`
+- 每个 overlay 环境（int/test/staging/prod）独立一个 `kustomization.yaml`
 
 ---
 
@@ -78,7 +80,7 @@ AI 生成路径时 MUST 使用以下公式，不做任何变通：
 - `{service}` → `.devops.yaml` 的 `service.name`
 - `{instance-name}` → 命名规范生成（见第 3 节）
 - `{topic-name}` → 命名规范生成（见第 3 节）
-- `{env}` → `dev` | `test` | `staging` | `prod`
+- `{env}` → `int` | `test` | `staging` | `prod`
 
 ---
 
@@ -89,7 +91,7 @@ AI 生成资源名时 MUST 使用以下规则：
 | 资源 | 命名规则 | 示例 | 校验正则 |
 |------|---------|------|---------|
 | 服务名 | 小写字母+数字+连字符，2-40 字符 | `order-service` | `^[a-z][a-z0-9-]{1,39}$` |
-| Namespace | `{env}-{domain}` | `dev-trade` | `^(dev\|test\|staging\|prod)-[a-z][a-z0-9-]+$` |
+| Namespace | `{env}-{domain}` | `int-trade` | `^(int\|test\|staging\|prod)-[a-z][a-z0-9-]+$` |
 | MySQL 实例 | `{service}-db` | `order-service-db` | — |
 | Redis 实例 | `{service}-cache` | `order-service-cache` | — |
 | Kafka topic | `{domain}.{service}.{event}` | `trade.order-service.created` | — |
@@ -112,7 +114,7 @@ AI 生成资源名时 MUST 使用以下规则：
 
 | 集群 | 环境 | 审批要求 |
 |------|------|---------|
-| non-prod | dev | 无（CI 直推） |
+| non-prod | int | 无（CI 直推） |
 | non-prod | test | 团队内 review |
 | non-prod | staging | Tech Lead 审批 |
 | prod | prod | Tech Lead + SRE 审批 |
@@ -121,7 +123,7 @@ AI 生成资源名时 MUST 使用以下规则：
 
 | 环境 | 触发方式 | 配置仓库操作 |
 |------|---------|-------------|
-| dev | CI 自动 | 直推 main 分支（仅 newTag） |
+| int | CI 自动 | 直推 main 分支（仅 newTag） |
 | test | 手动/AI | 创建 MR |
 | staging | 手动/AI | 创建 MR |
 | prod | 手动/AI | 创建 MR |
@@ -130,7 +132,7 @@ AI 生成资源名时 MUST 使用以下规则：
 
 | 环境 | Auto-Sync | Self-Heal | Prune |
 |------|-----------|-----------|-------|
-| dev | 开启 | 开启 | 开启 |
+| int | 开启 | 开启 | 开启 |
 | test | 关闭 | 开启 | 关闭 |
 | staging | 关闭 | 开启 | 关闭 |
 | prod | 关闭 | 开启 | 关闭 |
@@ -219,7 +221,7 @@ spec:
             failureThreshold: 30
 ```
 
-**Flyway init container 条件逻辑：** 当 `.devops.yaml` 中 `runtime.migration_path` 有值且 dependencies 中有 `mysql role=owner` 时，在 `spec.template.spec` 中添加 init container（模板见 §12.2）。
+**DB Migration init container 条件逻辑：** 当 `.devops.yaml` 中 `runtime.migration_command` 有值且 dependencies 中有 `mysql role=owner` 时，在 `spec.template.spec` 中添加 init container（模板见 §12.2）。
 
 **securityContext 规则（不可省略）：**
 - Pod 级：`runAsNonRoot: true`
@@ -247,6 +249,10 @@ spec:
 
 ### 6.3 Ingress 模板
 
+根据 `platform-config.yaml` 中目标集群的 `ingress.class` 选择模板。
+
+#### 6.3.1 Nginx Ingress 模板（当 ingress.class=nginx）
+
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -272,6 +278,63 @@ spec:
 
 host 不在 base 中设置，由 overlay 通过 JSON patch 添加。
 
+#### 6.3.2 Traefik IngressRoute 模板（当 ingress.class=traefik）
+
+当使用路径前缀（如 `/{prefix}`）时，需要同时生成 **IngressRoute** 和 **Middleware**：
+
+**ingressroute.yaml:**
+
+```yaml
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {service}
+  labels:
+    app: {service}
+    domain: {domain}
+    managed-by: devops-skill
+spec:
+  entryPoints:                          # ← 从 ingress.entrypoints 中取非 TLS 的入口点
+    - web                               #    如需 HTTPS 也加 websecure
+  routes:
+    - match: PathPrefix(`/{prefix}`)    # ← 路径前缀由用户指定，无前缀时用 Host 匹配
+      kind: Rule
+      middlewares:
+        - name: {service}-strip-prefix  # ← 仅在有路径前缀时需要
+      services:
+        - name: {service}
+          port: 80
+```
+
+> 无路径前缀时，match 规则改为 `Host(\`{host}\`)`，不需要 middleware。
+
+**middleware.yaml（仅在有路径前缀时生成）：**
+
+```yaml
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {service}-strip-prefix
+  labels:
+    app: {service}
+    domain: {domain}
+    managed-by: devops-skill
+spec:
+  stripPrefix:
+    prefixes:
+      - /{prefix}
+```
+
+**多组件服务（如 backend + frontend）** 在同一个 IngressRoute 中定义多条 routes，按路径前缀长度降序排列（最长匹配优先）。
+
+#### 6.3.3 Ingress 模板选择规则
+
+| 条件 | 生成文件 | kustomization 引用 |
+|------|---------|-------------------|
+| ingress.class=nginx | ingress.yaml | `- ingress.yaml` |
+| ingress.class=traefik，无路径前缀 | ingressroute.yaml | `- ingressroute.yaml` |
+| ingress.class=traefik，有路径前缀 | ingressroute.yaml + middleware.yaml | `- ingressroute.yaml`<br>`- middleware.yaml` |
+
 ### 6.4 Kustomization 模板（base）
 
 ```yaml
@@ -280,7 +343,7 @@ kind: Kustomization
 resources:
   - deployment.yaml
   - service.yaml
-  - ingress.yaml
+  - ingress.yaml          # ← 或 ingressroute.yaml + middleware.yaml（Traefik）
 ```
 
 ### 6.5 MySQL 实例模板（base）
@@ -410,6 +473,8 @@ patches:
 
 ### 7.6 Ingress Host Patch
 
+**Nginx Ingress（ingress.class=nginx）：**
+
 ```yaml
   - target:
       kind: Ingress
@@ -419,6 +484,22 @@ patches:
         path: /spec/rules/0/host
         value: {service}.company.com
 ```
+
+**Traefik IngressRoute（ingress.class=traefik）：**
+
+Traefik 的 host 在 IngressRoute 的 match 规则中设置。overlay 通过 JSON patch 修改 match 字段添加 Host 条件：
+
+```yaml
+  - target:
+      kind: IngressRoute
+      name: {service}
+    patch: |
+      - op: replace
+        path: /spec/routes/0/match
+        value: "Host(`{host}`) && PathPrefix(`/{prefix}`)"
+```
+
+> 如有多条 routes，每条都需要添加 Host 条件。
 
 ### 7.7 MySQL Prod Patch 示例
 
@@ -452,7 +533,7 @@ patches:
 
 ### 7.9 Resource Overlay
 
-结构与 services overlay 相同（§7.1），dev 通常无需 patch（用 base 默认值），prod 添加 patches（见 §7.7/7.8）。
+结构与 services overlay 相同（§7.1），int 通常无需 patch（用 base 默认值），prod 添加 patches（见 §7.7/7.8）。
 
 ---
 
@@ -510,15 +591,15 @@ AI 只写 secretRef 引用，**绝不接触密码值**。
 
 ## 11. GitOps 工作流
 
-### 11.1 CI 直推（仅 dev 环境镜像 tag）
+### 11.1 CI 直推（仅 int 环境镜像 tag）
 
 ```
-CI pipeline → clone gitops-repo → 修改 overlays/dev/kustomization.yaml 的 newTag
+CI pipeline → clone gitops-repo → 修改 overlays/int/kustomization.yaml 的 newTag
 → git commit -m "ci: update {service} image to {tag}" → git push（含 rebase 重试）
 → ArgoCD 自动同步
 ```
 
-**直推范围限制：** 仅允许修改 `overlays/dev/kustomization.yaml` 的 `images[].newTag` 字段。任何其他变更 MUST 走 MR。
+**直推范围限制：** 仅允许修改 `overlays/int/kustomization.yaml` 的 `images[].newTag` 字段。任何其他变更 MUST 走 MR。
 
 ### 11.2 MR 推进（test/staging/prod）
 
@@ -539,66 +620,52 @@ CI 或 AI → clone gitops-repo → 创建分支 → 修改目标 overlay → pu
 
 ## 12. DB Migration 执行规范
 
-### 12.1 工具与策略
+### 12.1 策略
 
-- **工具：** Flyway CLI（跨语言，执行纯 SQL migration）
+- **执行方式：** 应用自身镜像作为 initContainer 运行 migration 命令
+- **工具选择：** 由项目自行决定（Python 用 Alembic、Java 用 Flyway、Go 用 golang-migrate 等），平台不绑定特定工具
 - **策略：** Forward-only，不支持 DOWN migration
-- **文件命名：** `V{version}__{description}.sql`（版本号 + 双下划线 + 描述）
-- **文件位置：** 由 `.devops.yaml` 的 `runtime.migration_path` 指定（AI 在 init-service 时推断）
+- **命令：** 由 `.devops.yaml` 的 `runtime.migration_command` 指定
 
 ### 12.2 Init Container 模板
 
-当 `.devops.yaml` 包含 `runtime.migration_path` 且 dependencies 中有 `mysql role=owner` 时，AI 生成 deployment.yaml SHALL 在 base 中包含以下 init container：
+当 `.devops.yaml` 包含 `runtime.migration_command` 且 dependencies 中有 `mysql role=owner` 时，AI 生成 deployment.yaml SHALL 在 base 中包含以下 init container：
 
 ```yaml
       initContainers:
         - name: db-migrate
-          image: flyway/flyway:10
-          args: ["migrate"]
-          env:
-            - name: MYSQL_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: {instance-name}-secret
-                  key: MYSQL_HOST
-            - name: MYSQL_PORT
-              valueFrom:
-                secretKeyRef:
-                  name: {instance-name}-secret
-                  key: MYSQL_PORT
-            - name: MYSQL_DATABASE
-              valueFrom:
-                secretKeyRef:
-                  name: {instance-name}-secret
-                  key: MYSQL_DATABASE
-            - name: FLYWAY_URL
-              value: "jdbc:mysql://$(MYSQL_HOST):$(MYSQL_PORT)/$(MYSQL_DATABASE)"
-            - name: FLYWAY_USER
-              valueFrom:
-                secretKeyRef:
-                  name: {instance-name}-secret
-                  key: MYSQL_USER
-            - name: FLYWAY_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {instance-name}-secret
-                  key: MYSQL_PASSWORD
-            - name: FLYWAY_LOCATIONS
-              value: "filesystem:/migrations"
-          volumeMounts:
-            - name: migrations
-              mountPath: /migrations
+          image: {与主容器相同的镜像}
+          command: ["sh", "-c", "{migration_command}"]
+          envFrom:
+            - secretRef:
+                name: {instance-name}-secret
 ```
 
-**`{instance-name}`** 从 dependencies 中 `type=mysql, role=owner` 的 `name` 字段获取。
+**变量说明：**
+- **`image`**：与主容器 `spec.containers[0].image` 完全一致（同镜像、同 tag），确保 migration 代码版本与应用代码版本一致
+- **`{migration_command}`**：从 `.devops.yaml` 的 `runtime.migration_command` 读取
+- **`{instance-name}`**：从 dependencies 中 `type=mysql, role=owner` 的 `name` 字段获取
+- **`envFrom`**：复用主容器的 Secret 引用，注入 MYSQL_HOST / MYSQL_PORT / MYSQL_USER / MYSQL_PASSWORD / MYSQL_DATABASE
 
 ### 12.3 条件逻辑
 
 | 条件 | 行为 |
 |------|------|
-| 无 `runtime.migration_path` | 不生成 init container |
-| 有 `migration_path` + 有 mysql owner | 生成 init container |
-| 有 `migration_path` + 无 mysql owner | 警告"migration_path 已设置但无 MySQL owner 依赖" |
+| 无 `runtime.migration_command` | 不生成 init container |
+| 有 `migration_command` + 有 mysql owner | 生成 init container |
+| 有 `migration_command` + 无 mysql owner | 警告"migration_command 已设置但无 MySQL owner 依赖" |
+
+### 12.4 Dockerfile 约束
+
+当 `.devops.yaml` 包含 `runtime.migration_command` 时，应用的 Dockerfile MUST 包含 migration 工具和 migration 文件。AI 在 ci-config-check 时应验证这一点。
+
+常见语言示例：
+
+| 语言 | migration 工具 | Dockerfile 要求 |
+|------|---------------|-----------------|
+| python | Alembic | `pip install alembic` + `COPY alembic/ /app/alembic/` + `COPY alembic.ini /app/` |
+| java | Flyway | migration SQL 打进 jar 包（构建时自动包含） |
+| go | golang-migrate | 编译时嵌入或 `COPY migrations/ /app/migrations/` |
 
 ---
 
@@ -641,7 +708,7 @@ runtime:
   health_check: string  # 默认 /healthz
   metrics: string       # 默认 /metrics
   slow_start: boolean   # 默认 false，true 时生成 startupProbe
-  migration_path: string  # 可选，DB migration 文件目录，有值时注入 Flyway init container
+  migration_command: string  # 可选，DB migration 命令（如 "alembic upgrade head"），有值时注入 init container
 
 dependencies:           # 可选，数组
   - name: string        # 资源名

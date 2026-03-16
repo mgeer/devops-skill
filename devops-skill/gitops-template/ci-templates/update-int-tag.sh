@@ -1,6 +1,6 @@
 #!/bin/bash
-# CI 脚本：更新 dev overlay 镜像 tag（直推 main）
-# 用法：./update-dev-tag.sh <service> <domain> <new-tag>
+# CI 脚本：更新 int overlay 镜像 tag（直推 main）
+# 用法：./update-int-tag.sh <service> <domain> <new-tag>
 # 需要环境变量：GITOPS_REPO_URL, DEPLOY_TOKEN_USER, DEPLOY_TOKEN
 
 set -euo pipefail
@@ -10,7 +10,7 @@ DOMAIN="$2"
 NEW_TAG="$3"
 MAX_RETRIES=3
 
-OVERLAY_FILE="services/${DOMAIN}/${SERVICE}/overlays/dev/kustomization.yaml"
+OVERLAY_FILE="services/${DOMAIN}/${SERVICE}/overlays/int/kustomization.yaml"
 WORK_DIR=$(mktemp -d)
 trap "rm -rf ${WORK_DIR}" EXIT
 

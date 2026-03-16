@@ -80,14 +80,14 @@ resources/{domain}/{type}/{name}/
 ├── base/
 │   └── instance.yaml 或 topic.yaml
 └── overlays/
-    ├── dev/kustomization.yaml
+    ├── int/kustomization.yaml
     ├── test/kustomization.yaml
     ├── staging/kustomization.yaml
     └── prod/kustomization.yaml
 ```
 
 **overlay 差异规则：**
-- dev: 使用 base 默认值
+- int: 使用 base 默认值
 - prod: MySQL 3 instances + 2 routers, Kafka 6 partitions + 3 replicas
 
 #### 4A.4 环境变量注入
@@ -192,11 +192,11 @@ dependencies:
 
 配置仓库（通过 MR）:
   + resources/trade/mysql/order-service-db/base/instance.yaml
-  + resources/trade/mysql/order-service-db/overlays/dev/kustomization.yaml
+  + resources/trade/mysql/order-service-db/overlays/int/kustomization.yaml
   + resources/trade/mysql/order-service-db/overlays/test/kustomization.yaml
   + resources/trade/mysql/order-service-db/overlays/staging/kustomization.yaml
   + resources/trade/mysql/order-service-db/overlays/prod/kustomization.yaml
-  ~ services/trade/order-service/overlays/dev/kustomization.yaml  (+ envFrom secretRef)
+  ~ services/trade/order-service/overlays/int/kustomization.yaml  (+ envFrom secretRef)
   ~ services/trade/order-service/overlays/test/kustomization.yaml (+ envFrom secretRef)
   ~ services/trade/order-service/overlays/staging/kustomization.yaml (+ envFrom secretRef)
   ~ services/trade/order-service/overlays/prod/kustomization.yaml (+ envFrom secretRef)

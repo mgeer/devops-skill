@@ -10,11 +10,11 @@
 
 | 目标环境 | 源环境 |
 |---------|--------|
-| test | dev |
+| test | int |
 | staging | test |
 | prod | staging |
 
-dev 环境由 CI 自动部署，不支持手动推进。
+int 环境由 CI 自动部署，不支持手动推进。
 
 ---
 
@@ -25,12 +25,12 @@ dev 环境由 CI 自动部署，不支持手动推进。
 从用户消息中提取目标环境（test/staging/prod）。
 
 ```
-用户: "部署到 dev"
-AI:   "dev 环境由 CI 自动部署，无需手动推进。push 代码到 main 分支后 CI 会自动更新。"
+用户: "部署到 int"
+AI:   "int 环境由 CI 自动部署，无需手动推进。push 代码到 main 分支后 CI 会自动更新。"
       停止执行。
 
 用户: "部署到 test"
-AI:   目标环境 = test，源环境 = dev
+AI:   目标环境 = test，源环境 = int
 ```
 
 ### Step 2: 读取当前 tag
@@ -40,7 +40,7 @@ AI:   目标环境 = test，源环境 = dev
 - 目标环境 overlay 的当前 image tag
 
 ```
-源环境（dev）: abc123
+源环境（int）: abc123
 目标环境（test）: 7ef890
 ```
 
@@ -48,18 +48,19 @@ AI:   目标环境 = test，源环境 = dev
 
 ### Step 3: Migration 文件变更检测
 
-**仅当 `.devops.yaml` 包含 `runtime.migration_path` 时执行此步骤。**
+**仅当 `.devops.yaml` 包含 `runtime.migration_command` 时执行此步骤。**
 
-在代码仓库中执行：
+在代码仓库中检测 migration 相关文件变更：
 ```bash
-git diff {target-tag}..{source-tag} --name-only -- {migration_path}/
+# 扫描常见 migration 目录（alembic/、db/migration/、migrations/、sql/）
+git diff {target-tag}..{source-tag} --name-only -- alembic/ db/migration/ migrations/ sql/
 ```
 
 **有变更时**，展示信息搬运式提醒：
 ```
 本次推进包含以下数据库变更文件：
-  - db/migration/V3__add_order_status.sql
-  - db/migration/V4__create_index.sql
+  - alembic/versions/001_init_schema.py
+  - alembic/versions/002_add_index.py
 
 AI 无法判断 schema 变更的兼容性，请你自行确认：
   1. 以上变更是否向后兼容？（旧版本代码能否在新 schema 上运行）
@@ -70,7 +71,7 @@ AI 无法判断 schema 变更的兼容性，请你自行确认：
 
 **无变更时**，跳过此步骤，不显示任何提醒。
 
-**无 `migration_path` 时**，跳过此步骤。
+**无 `migration_command` 时**，跳过此步骤。
 
 ### Step 4: 确认推进
 
@@ -136,11 +137,11 @@ MR 审批合并后，ArgoCD 将自动同步部署。
 
 ### Step 3: Migration 提醒
 
-**仅当 `.devops.yaml` 包含 `runtime.migration_path` 时执行此步骤。**
+**仅当 `.devops.yaml` 包含 `runtime.migration_command` 时执行此步骤。**
 
 检查当前 tag 与回滚目标 tag 之间是否有 migration 文件变更：
 ```bash
-git diff {rollback-tag}..{current-tag} --name-only -- {migration_path}/
+git diff {rollback-tag}..{current-tag} --name-only -- alembic/ db/migration/ migrations/ sql/
 ```
 
 **有变更时**，展示提醒：

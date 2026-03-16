@@ -1,45 +1,45 @@
 clusters:
-  - name: non-prod
-    api_server: https://k8s-nonprod.company.com
-    environments: [dev, test, staging]
+  - name: int-cluster
+    api_server: https://10.66.3.165:6443
+    environments: [int, test, staging]
   - name: prod
     api_server: https://k8s-prod.company.com
     environments: [prod]
 
 environments:
-  dev:     { cluster: non-prod, auto_deploy: true,  approval: none }
-  test:    { cluster: non-prod, auto_deploy: false, approval: reviewer }
-  staging: { cluster: non-prod, auto_deploy: false, approval: tech-lead }
-  prod:    { cluster: prod,     auto_deploy: false, approval: tech-lead+sre }
+  int:     { cluster: int-cluster, auto_deploy: true,  approval: none }
+  test:    { cluster: int-cluster, auto_deploy: false, approval: reviewer }
+  staging: { cluster: int-cluster, auto_deploy: false, approval: tech-lead }
+  prod:    { cluster: prod,        auto_deploy: false, approval: tech-lead+sre }
 
 domains:
   - name: nrtk
     namespaces:
-      dev: dev-nrtk
+      int: int-nrtk
       test: test-nrtk
       staging: staging-nrtk
       prod: prod-nrtk
   - name: ppp-rtk
     namespaces:
-      dev: dev-ppp-rtk
+      int: int-ppp-rtk
       test: test-ppp-rtk
       staging: staging-ppp-rtk
       prod: prod-ppp-rtk
   - name: biz-app
     namespaces:
-      dev: dev-biz-app
+      int: int-biz-app
       test: test-biz-app
       staging: staging-biz-app
       prod: prod-biz-app
   - name: bigdata
     namespaces:
-      dev: dev-bigdata
+      int: int-bigdata
       test: test-bigdata
       staging: staging-bigdata
       prod: prod-bigdata
   - name: tools
     namespaces:
-      dev: dev-tools
+      int: int-tools
       test: test-tools
       staging: staging-tools
       prod: prod-tools
@@ -73,13 +73,13 @@ middleware:
 observability:
   metrics: { available: true, stack: prometheus }
   logging: { available: true, stack: loki }
-  tracing: { available: true, stack: tempo }
+  tracing: { available: true, stack: opentelemetry }
   grafana: { url: "https://grafana.company.com" }
 
 registry:
-  url: harbor.company.com
+  url: 10.68.65.39
   project: "{domain}"
 
 gitlab:
-  url: https://gitlab.company.com
-  gitops_repo: infra/gitops-repo
+  url: https://10.210.73.237
+  gitops_repo: devops1/gitops

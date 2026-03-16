@@ -164,7 +164,7 @@ MR 创建后，输出待开发者手动处理的清单：
   □ 如有定时任务、消息消费等后台进程，确保已停止
 
 MR 合并后的影响:
-  - dev 环境: ArgoCD 自动清理（auto-sync + prune 已开启）
+  - int 环境: ArgoCD 自动清理（auto-sync + prune 已开启）
   - test/staging/prod: 需手动触发 ArgoCD sync，或等待 self-heal
   - Operator 管理的中间件实例将随 CR 删除被回收
   - ⚠️ 数据不可恢复，请确保已完成数据备份

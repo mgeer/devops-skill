@@ -97,7 +97,7 @@ Kafka topic {topic-name} 的消费方无法从配置仓库确认。
 
 配置仓库（通过 MR）:
   - resources/trade/mysql/order-service-db/（整个目录删除）
-  ~ services/trade/order-service/overlays/dev/kustomization.yaml  (- envFrom secretRef)
+  ~ services/trade/order-service/overlays/int/kustomization.yaml  (- envFrom secretRef)
   ~ services/trade/order-service/overlays/test/kustomization.yaml (- envFrom secretRef)
   ~ services/trade/order-service/overlays/staging/kustomization.yaml (- envFrom secretRef)
   ~ services/trade/order-service/overlays/prod/kustomization.yaml (- envFrom secretRef)
@@ -138,7 +138,7 @@ Kafka topic {topic-name} 的消费方无法从配置仓库确认。
   - MR: {MR 链接}（配置仓库）
 
 注意:
-  - MR 合并后，dev 环境将自动同步（资源被删除）
+  - MR 合并后，int 环境将自动同步（资源被删除）
   - test/staging/prod 需手动触发 ArgoCD sync
   - 如果应用代码中仍引用此资源的连接信息，请同步清理代码
 ```

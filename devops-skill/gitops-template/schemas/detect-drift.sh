@@ -68,7 +68,7 @@ else
 fi
 
 # --- 检测 2: 各环境 overlay ---
-ENVS="dev test staging prod"
+ENVS="int test staging prod"
 SERVICE_OVERLAYS="${GITOPS_REPO}/services/${DOMAIN}/${SERVICE}/overlays"
 for env in ${ENVS}; do
   OVERLAY="${SERVICE_OVERLAYS}/${env}/kustomization.yaml"

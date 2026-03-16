@@ -66,17 +66,22 @@ AI 扫描代码仓库，按以下规则推断信息：
 
 依赖检测结果仅作为建议，由用户确认是否添加。初始化时可以不添加依赖。
 
-#### Migration 路径推断
-扫描常见 migration 目录：
-| 目录 | 判断条件 |
-|------|---------|
-| `db/migration/` | 存在且包含 `V*.sql` 文件 |
-| `migrations/` | 存在且包含 `V*.sql` 文件 |
-| `sql/` | 存在且包含 `V*.sql` 文件 |
+#### Migration 推断
+扫描已有的 migration 配置：
 
-- 找到一个 → 推断为 `migration_path`，展示并让用户确认
-- 找到多个 → 列出候选目录让用户选择
-- 未找到 → 不设置 `migration_path`（不启用 migration），不主动询问
+| 语言 | 扫描目标 | 推断 migration_command |
+|------|---------|----------------------|
+| python | `alembic.ini` 或 `alembic/` 目录 | `alembic upgrade head` |
+| java | `db/migration/V*.sql` 或 `src/main/resources/db/migration/` | `flyway migrate`（工具已在 jar 中） |
+| go | `migrations/` 目录含 `*.sql` 文件 | `migrate -path /app/migrations -database $DATABASE_URL up` |
+| node | `migrations/` 目录或 `knexfile.js` | `npx knex migrate:latest` |
+
+推断逻辑：
+- 找到匹配 → 推断 `migration_command`，展示并让用户确认
+- 未找到 + 有 MySQL owner 依赖 → **主动提示**："检测到 MySQL owner 依赖但未发现 migration 配置。建议设置 DB migration，部署时自动初始化和更新数据库 schema。是否需要设置？"
+  - 用户同意 → 根据语言推荐默认 command（如 Python 推荐 `alembic upgrade head`），让用户确认
+  - 用户拒绝 → 不设置，继续
+- 未找到 + 无 MySQL 依赖 → 不询问
 
 ### Step 3: 展示推断结果，逐项确认
 
@@ -88,7 +93,7 @@ AI 扫描代码仓库，按以下规则推断信息：
   端口:        8080（来源: main.go ListenAndServe）
   健康检查:    /healthz（来源: 路由注册）
   慢启动:      false
-  Migration:   db/migration/（来源: 目录扫描，含 3 个 V*.sql 文件）
+  Migration:   alembic upgrade head（来源: 检测到 alembic/ 目录）
 
   检测到的依赖:
     - MySQL（来源: database/sql import）
@@ -128,7 +133,7 @@ runtime:
   health_check: {确认的健康检查路径}
   metrics: /metrics
   slow_start: {确认的慢启动标识}
-  migration_path: {确认的 migration 路径}   # 仅当推断到 migration 目录时才包含此字段
+  migration_command: {确认的 migration 命令}   # 仅当推断到或用户设置时才包含此字段
 
 dependencies: []   # 或包含用户确认的依赖
 ```
@@ -137,7 +142,7 @@ dependencies: []   # 或包含用户确认的依赖
 - `gitops.repo` → 从 `platform-inventory.yaml` 的 `gitlab.url` + `gitlab.gitops_repo` 拼接
 - `gitops.path` → `services/{domain}/{service}` 固定公式
 - `runtime.metrics` → 默认 `/metrics`
-- `runtime.migration_path` → 仅当 Step 2 推断到 migration 目录且用户确认后才写入；未推断到则不包含此字段
+- `runtime.migration_command` → 仅当 Step 2 推断到 migration 配置或用户主动设置后才写入；未推断到且用户未设置则不包含此字段
 
 ### Step 5: 资源规格选择
 
@@ -167,7 +172,7 @@ dependencies: []   # 或包含用户确认的依赖
 
 ### Step 7: 生成配置仓库文件
 
-按 platform-spec.md 模板生成：
+按 platform-spec.md 模板生成。**Ingress 文件根据目标集群的 ingress.class 动态选择格式**（见 platform-spec.md 第 6.3 节）。
 
 **服务文件（必创建）：**
 ```
@@ -175,10 +180,12 @@ services/{domain}/{service}/
 ├── base/
 │   ├── deployment.yaml      ← 第 6.1 节模板，含 securityContext
 │   ├── service.yaml          ← 第 6.2 节模板
-│   ├── ingress.yaml          ← 第 6.3 节模板
+│   ├── ingress.yaml          ← 第 6.3 节 Nginx 模板（当 ingress.class=nginx）
+│   │   或 ingressroute.yaml  ← 第 6.3 节 Traefik 模板（当 ingress.class=traefik）
+│   │   及 middleware.yaml    ← 第 6.3 节 Traefik StripPrefix 中间件（如需路径前缀）
 │   └── kustomization.yaml    ← 第 6.4 节模板
 └── overlays/
-    ├── dev/kustomization.yaml     ← 用户选择的资源等级
+    ├── int/kustomization.yaml     ← 用户选择的资源等级
     ├── test/kustomization.yaml
     ├── staging/kustomization.yaml
     └── prod/kustomization.yaml
@@ -190,16 +197,16 @@ resources/{domain}/{type}/{name}/
 ├── base/
 │   └── instance.yaml 或 topic.yaml    ← 第 6.5/6.6/6.7 节模板
 └── overlays/
-    ├── dev/kustomization.yaml
+    ├── int/kustomization.yaml
     ├── test/kustomization.yaml
     ├── staging/kustomization.yaml
     └── prod/kustomization.yaml
 ```
 
 **overlay 差异规则：**
-- dev: 用户选择的资源等级，replicas=1
-- test: 同 dev
-- staging: 同 dev
+- int: 用户选择的资源等级，replicas=1
+- test: 同 int
+- staging: 同 int
 - prod: 资源等级上调一档（S→M, M→L, L→L），replicas=3，添加 ingress host
 
 ### Step 8: 展示变更方案
@@ -212,12 +219,12 @@ resources/{domain}/{type}/{name}/
   services/trade/order-service/base/service.yaml
   services/trade/order-service/base/ingress.yaml
   services/trade/order-service/base/kustomization.yaml
-  services/trade/order-service/overlays/dev/kustomization.yaml
+  services/trade/order-service/overlays/int/kustomization.yaml
   services/trade/order-service/overlays/test/kustomization.yaml
   services/trade/order-service/overlays/staging/kustomization.yaml
   services/trade/order-service/overlays/prod/kustomization.yaml
   resources/trade/mysql/order-service-db/base/instance.yaml
-  resources/trade/mysql/order-service-db/overlays/dev/kustomization.yaml
+  resources/trade/mysql/order-service-db/overlays/int/kustomization.yaml
   ...（共 N 个文件）
 
 代码仓库（本地）:
@@ -266,6 +273,13 @@ resources/{domain}/{type}/{name}/
 2. 是否包含部署步骤（更新配置仓库镜像 tag）
 3. 镜像 tag 是否使用 git sha
 4. 是否推送到正确的 Harbor 项目
+5. **（离线集群）** Dockerfile 是否从 registry 拉取基础镜像
+6. **（离线集群）** 是否使用 deps 镜像模式（Kaniko 构建零网络依赖）
+
+**离线集群额外检查（当 cluster.network=offline 时）：**
+- Dockerfile 中 FROM 指令 MUST 使用 `{registry.url}/library/` 前缀
+- 如有 `apt-get`/`pip install`/`npm ci` 等网络操作，MUST 在预构建的 deps 基础镜像中完成
+- Kaniko 构建参数 MUST 包含 `--skip-tls-verify`（当 registry.insecure=true）
 
 **检查结果处理：**
 - 全部通过 → 仅展示"CI 配置检查通过"
@@ -284,7 +298,7 @@ resources/{domain}/{type}/{name}/
 下一步:
   1. Review 并合并配置仓库 MR
   2. 将 .devops.yaml commit 到代码仓库
-  3. push 代码后，CI 将自动构建镜像并部署到 dev 环境
+  3. push 代码后，CI 将自动构建镜像并部署到 int 环境
   4. 如需添加更多依赖，运行 /devops 添加依赖
 ```
 

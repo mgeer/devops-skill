@@ -1,0 +1,103 @@
+# DevOps 平台配置文件
+# 首次使用 /devops skill 前，请填写所有标注"必填"的字段。
+# 集群信息可通过 init-cluster flow 自动探测填充。
+#
+# 如何验证填写是否正确：运行 /devops，skill 会自动检查并提示缺失项。
+
+# ─────────────────────────────────────────
+# 必填：GitLab 信息（全局唯一）
+# ─────────────────────────────────────────
+gitlab:
+  # GitLab 实例地址（不含末尾斜杠）
+  # 示例：https://gitlab.example.com
+  url: ""
+
+  # GitOps 配置仓库的路径（group/repo 格式）
+  # 示例：infra/gitops-repo
+  gitops_repo: ""
+
+# ─────────────────────────────────────────
+# 必填：镜像仓库（全局唯一）
+# ─────────────────────────────────────────
+registry:
+  # Harbor（或其他 OCI 镜像仓库）地址（不含 https://）
+  # 示例：harbor.example.com
+  url: ""
+
+  # 是否使用自签名证书（影响 Kaniko --skip-tls-verify 等配置）
+  insecure: false
+
+# ─────────────────────────────────────────
+# 条件必填：中间件（全局默认，集群级可覆盖）
+# 仅在业务服务有 Kafka 依赖时需要填写
+# ─────────────────────────────────────────
+middleware:
+  kafka:
+    # Kafka bootstrap 地址（含端口）
+    # 示例：kafka-cluster-kafka-bootstrap.kafka.svc:9092
+    # 不使用 Kafka 可留空
+    bootstrap: ""
+
+# ─────────────────────────────────────────
+# 必填：集群定义
+# 每个 key 是集群的逻辑名称，供 environments 引用
+# 可通过 init-cluster flow 自动探测填充
+# ─────────────────────────────────────────
+clusters:
+  # dev-cluster:                          # ← 集群逻辑名，自定义
+  #   display_name: "开发集群"              # 可选，用于日志和提示
+  #   kubeconfig: "~/.kube/config"         # kubeconfig 路径
+  #   api_server: "https://x.x.x.x:6443"  # K8s API Server 地址
+  #   arch: "amd64"                        # 节点架构：amd64 | arm64
+  #   network: "offline"                   # 网络模式：online | offline
+  #   master_eips:                         # Master 节点外部 IP（供域名解析）
+  #     - "10.x.x.x"
+  #   ingress:                             # Ingress 控制器配置
+  #     class: "traefik"                   # 控制器类型：traefik | nginx
+  #     entrypoints:                       # 可用入口点
+  #       - name: "web"
+  #         port: 80
+  #         tls: false
+  #       - name: "websecure"
+  #         port: 1443
+  #         tls: true
+  #     default_entrypoint: "web"          # 默认入口点
+
+# ─────────────────────────────────────────
+# 必填：环境 → 集群映射
+# ─────────────────────────────────────────
+environments:
+  # int:
+  #   cluster: "dev-cluster"              # 对应 clusters 下的 key
+  #   auto_deploy: true                   # ArgoCD 自动同步
+  #   approval: "none"                    # 审批要求：none | reviewer | tech-lead | tech-lead+sre
+  # test:
+  #   cluster: "dev-cluster"
+  #   auto_deploy: false
+  #   approval: "reviewer"
+  # staging:
+  #   cluster: "dev-cluster"
+  #   auto_deploy: false
+  #   approval: "tech-lead"
+  # prod:
+  #   cluster: "prod-cluster"
+  #   auto_deploy: false
+  #   approval: "tech-lead+sre"
+
+# ─────────────────────────────────────────
+# 构建策略
+# 根据目标集群的 network 字段自动选择
+# ─────────────────────────────────────────
+build:
+  # 离线集群构建策略（network: offline 时启用）
+  # 依赖镜像模式：本地预构建含 pip/npm 依赖的基础镜像推到 registry
+  # CI Kaniko 只 COPY 代码，零网络依赖
+  offline:
+    deps_image:
+      enabled: true
+
+  # 在线集群构建策略（network: online 时启用）
+  # 标准 Kaniko 构建，直接从公网拉取依赖
+  online:
+    deps_image:
+      enabled: false
